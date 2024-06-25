@@ -1,2 +1,36 @@
+steps:
+# Install backend dependencies
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install']
+  dir: 'server'
+
+# Install frontend dependencies
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['install']
+  dir: 'public'
+
+# Build the frontend
+- name: 'gcr.io/cloud-builders/npm'
+  args: ['run', 'build']
+  dir: 'public'
+
+# Copy frontend build to backend public directory
+- name: 'gcr.io/cloud-builders/gsutil'
+  args: ['-m', 'cp', '-r', 'public/build/*', 'server/public/']
+
+# Build the Docker image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/mern-app:$COMMIT_SHA', '.']
+  dir: '.'
+
+# Push the Docker image to Google Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/mern-app:$COMMIT_SHA']
+
+images:
+- 'gcr.io/$PROJECT_ID/mern-app:$COMMIT_SHA'
+
+# Optional: Set machine type
 options:
-  logging: CLOUD_LOGGING_ONLY
+  machineType: 'N1_HIGHCPU_8'
+
