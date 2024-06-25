@@ -9,9 +9,12 @@ steps:
   args: ['install']
   dir: 'public'
 
-# Build the frontend
-- name: 'gcr.io/cloud-builders/npm'
-  args: ['run', 'build']
+# Set environment variables for React build
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - 'export REACT_APP_LOCALHOST_USER="GUP-SUP-USER" && npm run build'
   dir: 'public'
 
 # Copy frontend build to backend public directory
@@ -33,4 +36,3 @@ images:
 # Optional: Set machine type
 options:
   machineType: 'N1_HIGHCPU_8'
-
