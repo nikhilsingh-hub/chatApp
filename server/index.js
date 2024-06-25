@@ -24,8 +24,9 @@ mongoose.connect("mongodb://127.0.0.1:27017/chat", {
 app.use("/api/auth", authenticateRoutes);
 app.use("/api/messages", messageRoutes);
 
-const server = app.listen(process.env.PORT, () =>
-  console.log(`Server started on ${process.env.PORT}`)
+const port = process.env.PORT || 5000;
+const server = app.listen(port, () =>
+  console.log(`Server started on ${port}`)
 );
 const io = socket(server, {
   cors: {
