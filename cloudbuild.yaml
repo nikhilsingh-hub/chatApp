@@ -1,38 +1,86 @@
 steps:
 # Install backend dependencies
-- name: 'gcr.io/cloud-builders/npm'
+- name: 'node:14'
+  entrypoint: 'npm'
   args: ['install']
   dir: 'server'
 
 # Install frontend dependencies
-- name: 'gcr.io/cloud-builders/npm'
+- name: 'node:14'
+  entrypoint: 'npm'
   args: ['install']
   dir: 'public'
 
-# Set environment variables for React build
-- name: 'gcr.io/cloud-builders/gcloud'
-  entrypoint: 'bash'
-  args:
-    - '-c'
-    - 'export REACT_APP_LOCALHOST_USER="GUP-SUP-USER" && npm run build'
+# Build the frontend
+- name: 'node:14'
+  entrypoint: 'npm'
+  args: ['run', 'build']
   dir: 'public'
 
-# Copy frontend build to backend public directory
-- name: 'gcr.io/cloud-builders/gsutil'
-  args: ['-m', 'cp', '-r', 'public/build/*', 'server/public/']
+# Copy frontend build to backend static files directory
+- name: 'ubuntu'
+  entrypoint: 'bash'
+  args: ['-c', 'cp -r public/build server/public']
 
-# Build the Docker image
+# Build Docker image
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/mern-app:$COMMIT_SHA', '.']
-  dir: '.'
+  args: ['build', '-t', 'gcr.io/my-chat-app-427408/mern-app:$SHORT_SHA', '.']
 
-# Push the Docker image to Google Container Registry
+# Push Docker image to Google Container Registry
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/mern-app:$COMMIT_SHA']
+  args: ['push', 'gcr.io/my-chat-app-427408/mern-app:$SHORT_SHA']
+
+# Deploy to Cloud Run
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: [
+    'run', 'deploy', 'mern-app',
+    '--image', 'gcr.io/my-chat-app-427408/mern-app:$SHORT_SHA',
+    '--platform', 'managed',
+    '--region', 'us-central1',
+    '--allow-unauthenticated',
+    '--port', '5000'
+  ]
 
 images:
-- 'gcr.io/$PROJECT_ID/mern-app:$COMMIT_SHA'
+- 'gcr.io/my-chat-app-427408/mern-app:$SHORT_SHA'
 
-# Optional: Set machine type
-options:
-  machineType: 'N1_HIGHCPU_8'
+
+
+# steps:
+# # Install backend dependencies
+# - name: 'gcr.io/cloud-builders/npm'
+#   args: ['install']
+#   dir: 'server'
+
+# # Install frontend dependencies
+# - name: 'gcr.io/cloud-builders/npm'
+#   args: ['install']
+#   dir: 'public'
+
+# # Set environment variables for React build
+# - name: 'gcr.io/cloud-builders/gcloud'
+#   entrypoint: 'bash'
+#   args:
+#     - '-c'
+#     - 'export REACT_APP_LOCALHOST_USER="GUP-SUP-USER" && npm run build'
+#   dir: 'public'
+
+# # Copy frontend build to backend public directory
+# - name: 'gcr.io/cloud-builders/gsutil'
+#   args: ['-m', 'cp', '-r', 'public/build/*', 'server/public/']
+
+# # Build the Docker image
+# - name: 'gcr.io/cloud-builders/docker'
+#   args: ['build', '-t', 'gcr.io/$PROJECT_ID/mern-app:$COMMIT_SHA', '.']
+#   dir: '.'
+
+# # Push the Docker image to Google Container Registry
+# - name: 'gcr.io/cloud-builders/docker'
+#   args: ['push', 'gcr.io/$PROJECT_ID/mern-app:$COMMIT_SHA']
+
+# images:
+# - 'gcr.io/$PROJECT_ID/mern-app:$COMMIT_SHA'
+
+# # Optional: Set machine type
+# options:
+#   machineType: 'N1_HIGHCPU_8'
